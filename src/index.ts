@@ -31,20 +31,21 @@ canvas.height = window.innerHeight
 
 const ctx = canvas.getContext('2d')
 
-let objectIsSelected = false
+let GAME_OVER = false
 let selectedObject: parsedSceneDataObject | null = null
 
 const expressionMap: Map<string, number> = new Map([
 	["WIN_HEIGHT", canvas.height],
 	["WIN_WIDTH", canvas.width]
 ])
-console.log(expressionMap)
+// console.log(expressionMap)
 
 function parseObjectDataExpression(expression: string): number {
 	for (const [key, value] of expressionMap) expression = expression.replaceAll(key, `${value}`)
 	return eval(expression)
 }
 
+let characterObject: parsedSceneDataObject | null = null
 let levelData = { scene_data: loadLevelData(initLevelData)}
 console.log(levelData)
 
@@ -69,6 +70,7 @@ function loadLevelData(data: { scene_data: Array<unparsedSceneDataObject> }): Ar
 			fillColor: object.fillColor,
 			moveable: object.moveable
 		})
+		if (object.id === 0) characterObject = parsedSceneData[parsedSceneData.length - 1]
 	}
 	return parsedSceneData
 }
@@ -80,19 +82,22 @@ function draw() {
 		ctx.fillStyle = object.fillColor
 		ctx.strokeStyle = object.strokeColor
 		ctx.fillRect(object.pos.x, object.pos.y, object.width, object.height)
-		ctx.strokeRect(object.pos.x, object.pos.y, object.width, object.height)
+		if (object.strokeColor) ctx.strokeRect(object.pos.x, object.pos.y, object.width, object.height)
 	}
 	// debugger
 }
 
 const MOVEMENT_INCREMENT = 10
 
-function objectCollided(direction: string): boolean {
+function objectCollided(direction: 'UP' | 'DOWN' | 'LEFT' | 'RIGHT', isCheckingCharacter = false, ignoreCharacterObject = false): boolean | parsedSceneDataObject {
+	// console.log('start collision detection')
+	// console.log(direction, isCheckingCharacter)
 	// Assume selectedObject is not null since that check should have already been done prior to this call
-	const clonedObject: parsedSceneDataObject = JSON.parse(JSON.stringify(selectedObject))
+	const clonedObject: parsedSceneDataObject = JSON.parse(JSON.stringify(isCheckingCharacter ? characterObject : selectedObject))
 	// console.log(clonedObject)
 	switch (direction) {
 		case 'UP':
+			console.log('movment: up')
 			clonedObject.pos.y -= MOVEMENT_INCREMENT
 			break;
 		case 'DOWN':
@@ -113,24 +118,66 @@ function objectCollided(direction: string): boolean {
 	const minY_1 = clonedObject.pos.y
 	const maxY_1 = minY_1 + clonedObject.height
 
-	for (const object of Object.values(levelData.scene_data)) {
-		if (object.id === clonedObject.id) continue
+	const TOLERANCE_THRESHOLD = isCheckingCharacter ? 5 : 0
 
+	for (const object of Object.values(levelData.scene_data)) {
+		if (object.id === clonedObject.id || (object.name.toLowerCase() === 'character' && ignoreCharacterObject)) continue
+		// console.log(object)
 		const minX_2 = object.pos.x
 		const maxX_2 = minX_2 + object.width
 		const minY_2 = object.pos.y
 		const maxY_2 = minY_2 + object.height
 
 		// TODO: make this explanation make more sense
-		// If one of the extreme x values of the first rectangle (max or min) are contained within an interval defined by the extremes of the x values of the second rectangle and one or more of one of the rectangles extreme y values are contained within an interval defined by the others extreme y values, then the two rectangles are overlapping.
-		if (((minX_1 >= minX_2 && minX_1 <= maxX_2) || (maxX_1 >= minX_2 && maxX_1 <= maxX_2)) && 
-			((minY_1 >= minY_2 && minY_1 <= maxY_2) || (maxY_1 >= minY_2 && maxY_1 <= maxY_2))) {
-			// Check both max and min y_1
-			// There should be overlap(?)
-			// console.log('collide')
-			return true
+		// If one of the extreme x values of the first rectangle (max or min) are contained within an interval defined by the extremes of the x values of the second rectangle, or vice verse, and one or more of one of the rectangles extreme y values are contained within an interval defined by the others extreme y values, or vice verse once more, then the two rectangles are overlapping.
+		if ((
+		(minX_1 >= minX_2 && minX_1 <= maxX_2) ||
+		(maxX_1 >= minX_2 && maxX_1 <= maxX_2) ||
+		(minX_2 >= minX_1 && minX_2 <= maxX_1) ||
+		(maxX_2 >= minX_1 && maxX_2 <= maxX_1)
+		) && (
+		(minY_1 >= minY_2 && minY_1 <= maxY_2) ||
+		(maxY_1 >= minY_2 && maxY_1 <= maxY_2) ||
+		(minY_2 >= minY_1 && minY_2 <= maxY_1) ||
+		(maxY_2 >= minY_1 && maxY_2 <= maxY_1)
+		)) {
+			// console.log(`${clonedObject.name} overlapping ${object.name}`)
+			if (isCheckingCharacter && !ignoreCharacterObject) {
+				// console.log('checking character object for specific collisions')
+				if (direction === 'RIGHT') {
+					const differenceInYLevel = maxY_1 - minY_2
+					if (differenceInYLevel <= TOLERANCE_THRESHOLD) {
+						// Possible problem waiting to happen since we are just moving the character without really checking its surroundings
+						characterObject.pos.y = minY_2 + characterObject.height + 1
+						characterObject.pos.x = minX_2 - characterObject.width + 1
+						// We've dealt with the collision and should no longer be colliding
+						return false
+					}
+				} else if (direction === 'DOWN') {
+					if (object.name.toLowerCase() === 'death') return object
+					// This little bit of extra math should help in the character not getting pushed off screen
+					const candidateYValue = minY_2 - characterObject.height - 1
+					if (candidateYValue > 0) characterObject.pos.y = candidateYValue
+				}
+			} else if (direction === 'UP' && object.name.toLowerCase() === 'character') {
+				// Platform should push character up if possible
+				const characterCollisionUp = objectCollided('UP', true)
+				// console.log(characterCollisionUp)
+				if (characterCollisionUp === false) {
+					// Area above character is clear, still need to check if the platform is going to be clear
+					const objectHasCollisionsAbove = objectCollided('UP', false, true)
+					if (objectHasCollisionsAbove === false) {
+						// Move character up and let the original event handler that called this function move the object
+						// Because we check for collisions above the character, this shouldn't push the character off screen
+						characterObject.pos.y -= MOVEMENT_INCREMENT
+						return false
+					}
+				}
+			}
+			return object
 		} else if (minY_1 < 0 || maxY_1 > canvas.height || minX_1 < 0 || maxX_1 > canvas.width) {
 			// Edge of screen collision
+			// console.log('edge of screen')
 			return true
 		}
 	}
@@ -138,28 +185,29 @@ function objectCollided(direction: string): boolean {
 	return false
 	// =============================================================================================================================================
 	// AS OF 1:37AM I AM FAIRLY CONFIDENT THAT THIS COLLISION DETECTION ALGORITHM IS WORKING AS INTENDED WITHOUT UNACCOUNTED FOR EDGE CASES, BUT ITS ALSO 1:37AM
+	// UPDATE: I WAS WRONG I ONLY PUT HALF THE COLLISION CONDITIONS IN, SHOULD NOW FUNCTION MORE CONSISTENTLY
 	// =============================================================================================================================================
 }
 
 window.addEventListener('keydown', e => {
-	if (selectedObject === null) return
+	if (selectedObject === null || GAME_OVER) return
 	// Move the selected object accordingly
 	switch (e.code) {
 		case 'KeyW':
 		case 'ArrowUp':
-			if (!objectCollided('UP')) selectedObject.pos.y -= MOVEMENT_INCREMENT
+			if (objectCollided('UP') === false) selectedObject.pos.y -= MOVEMENT_INCREMENT
 			break;
 		case 'KeyS':
 		case 'ArrowDown':
-			if (!objectCollided('DOWN')) selectedObject.pos.y += MOVEMENT_INCREMENT
+			if (objectCollided('DOWN') === false) selectedObject.pos.y += MOVEMENT_INCREMENT
 			break;	
 		case 'KeyA':
 		case 'ArrowLeft':
-			if (!objectCollided('LEFT')) selectedObject.pos.x -= MOVEMENT_INCREMENT
+			if (objectCollided('LEFT') === false) selectedObject.pos.x -= MOVEMENT_INCREMENT
 			break;
 		case 'KeyD':
 		case 'ArrowRight':
-			if (!objectCollided('RIGHT')) selectedObject.pos.x += MOVEMENT_INCREMENT
+			if (objectCollided('RIGHT') === false) selectedObject.pos.x += MOVEMENT_INCREMENT
 			break;
 		default:
 			break;
@@ -167,6 +215,7 @@ window.addEventListener('keydown', e => {
 })
 
 window.addEventListener('mousedown', e => {
+	if (GAME_OVER) return
 	// Determine if the mouse press is within the bounds of an object
 	for (const object of Object.values(levelData.scene_data)) {
 		if (!object.moveable) continue
@@ -178,18 +227,41 @@ window.addEventListener('mousedown', e => {
 		const hitReg = e.x >= minX && e.x <= maxX && e.y >= minY && e.y <= maxY
 		console.log(hitReg)
 		if (hitReg) {
-			objectIsSelected = true
 			selectedObject = object
 			console.log(object)
 			object.fillColor = "purple"
 			return
 		}
 	}
-	objectIsSelected = false
 	if (selectedObject !== null) {
 		selectedObject.fillColor = "white"
 		selectedObject = null
 	}
 })
 
-window.onload = () => { setInterval(draw, 100) }
+function advanceCharacter() {
+	if (GAME_OVER) return
+	const characterCollidingRight = objectCollided('RIGHT', true)
+	const characterCollidingDown = objectCollided('DOWN', true)
+	if (characterCollidingRight === false  && characterCollidingDown !== false) characterObject.pos.x += MOVEMENT_INCREMENT
+	if (characterCollidingDown === false) characterObject.pos.y += MOVEMENT_INCREMENT
+	if (characterCollidingDown["name"]?.toLowerCase() === "end") {
+		// Game Win!
+		window.alert('Game win')
+		GAME_OVER = true
+	} else if (characterCollidingDown["name"]?.toLowerCase() === 'death') {
+		// Game Over!
+		window.alert('Game over')
+		GAME_OVER = true
+	}
+	if (characterCollidingDown === true) {
+		// objectCollided returns true if we hit the edge of the screen
+	}
+	// console.log(characterCollidingRight, characterCollidingDown)
+}
+
+window.onload = () => { 
+	setInterval(draw, 100)
+	setTimeout(() => setInterval(advanceCharacter, 100), 1500)
+	console.log(characterObject)
+}
