@@ -1,0 +1,22 @@
+{
+	"name": "gmtk_2023",
+	"version": "1.0.0",
+	"description": "",
+	"main": "index.js",
+	"scripts": {
+		"build": "webpack"
+	},
+	"keywords": [],
+	"author": "",
+	"license": "ISC",
+	"dependencies": {
+		"three": "^0.154.0",
+		"ts-loader": "^9.4.4",
+		"typescript": "^5.1.6",
+		"webpack": "^5.88.1",
+		"webpack-cli": "^5.1.4"
+	},
+	"devDependencies": {
+		"@types/three": "^0.153.0"
+	}
+}
