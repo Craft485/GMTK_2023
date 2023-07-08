@@ -2,6 +2,7 @@
     "scene_data": [
         {
             "name": "start",
+            "id": 1,
             "pos": {
                 "x": 0,
                 "y": 500
@@ -14,6 +15,7 @@
         },
         {
             "name": "end",
+            "id": 2,
             "pos": {
                 "x": "WIN_WIDTH - 100",
                 "y": 500
@@ -26,6 +28,7 @@
         },
         {
             "name": "platform",
+            "id": 3,
             "pos": {
                 "x": "(WIN_WIDTH / 2) - 25",
                 "y": "(WIN_HEIGHT / 2) - 25"
