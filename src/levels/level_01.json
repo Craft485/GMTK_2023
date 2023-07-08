@@ -1,0 +1,40 @@
+{
+    "scene_data": [
+        {
+            "name": "start",
+            "pos": {
+                "x": 0,
+                "y": 500
+            },
+            "width": 100,
+            "height": "WIN_HEIGHT",
+            "strokeColor": "black",
+            "fillColor": "green",
+            "moveable": false
+        },
+        {
+            "name": "end",
+            "pos": {
+                "x": "WIN_WIDTH - 100",
+                "y": 500
+            },
+            "width": 100,
+            "height": "WIN_HEIGHT",
+            "strokeColor": "black",
+            "fillColor": "blue",
+            "moveable": false
+        },
+        {
+            "name": "platform",
+            "pos": {
+                "x": "WIN_WIDTH / 2",
+                "y": "WIN_HEIGHT / 2"
+            },
+            "width": 100,
+            "height": "50",
+            "strokeColor": "black",
+            "fillColor": "white",
+            "moveable": true
+        }
+    ]
+}
