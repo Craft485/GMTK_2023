@@ -178,6 +178,7 @@ function objectCollided(direction: 'UP' | 'DOWN' | 'LEFT' | 'RIGHT', isCheckingC
 }
 
 const keyDownEventHandler = (e: KeyboardEvent) => {
+	if (e.code === 'KeyR' || e.code === 'Enter') return levelData = { scene_data: loadLevelData(levels[levelIndex]) }
 	if (selectedObject === null || GAME_OVER) return
 	// Move the selected object accordingly
 	switch (e.code) {
