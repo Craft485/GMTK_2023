@@ -55,7 +55,6 @@ console.log(levelData)
 function loadLevelData(data: { scene_data: Array<unparsedSceneDataObject> }): Array<parsedSceneDataObject> {
 	let parsedSceneData = []
 	for (const object of Object.values(data.scene_data)) {
-		// console.log(object)
 		const xPos = object.pos.x === Number(object.pos.x) ? object.pos.x : parseObjectDataExpression(`${object.pos.x}`)
 		const yPos = object.pos.y === Number(object.pos.y) ? object.pos.y : parseObjectDataExpression(`${object.pos.y}`)
 		const width = object.width === Number(object.width) ? object.width : parseObjectDataExpression(`${object.width}`)
@@ -93,7 +92,7 @@ const MOVEMENT_INCREMENT = 10
 function objectCollided(direction: 'UP' | 'DOWN' | 'LEFT' | 'RIGHT', isCheckingCharacter = false, ignoreCharacterObject = false): boolean | parsedSceneDataObject {
 	// Assume selectedObject is not null since that check should have already been done prior to this call
 	const clonedObject: parsedSceneDataObject = JSON.parse(JSON.stringify(isCheckingCharacter ? characterObject : selectedObject))
-	// console.log(clonedObject)
+
 	switch (direction) {
 		case 'UP':
 			clonedObject.pos.y -= MOVEMENT_INCREMENT
@@ -120,7 +119,7 @@ function objectCollided(direction: 'UP' | 'DOWN' | 'LEFT' | 'RIGHT', isCheckingC
 
 	for (const object of Object.values(levelData.scene_data)) {
 		if (object.id === clonedObject.id || (object.name.toLowerCase() === 'character' && ignoreCharacterObject)) continue
-		// console.log(object)
+
 		const minX_2 = object.pos.x
 		const maxX_2 = minX_2 + object.width
 		const minY_2 = object.pos.y
@@ -140,7 +139,6 @@ function objectCollided(direction: 'UP' | 'DOWN' | 'LEFT' | 'RIGHT', isCheckingC
 		(maxY_2 >= minY_1 && maxY_2 <= maxY_1)
 		)) {
 			if (isCheckingCharacter && !ignoreCharacterObject) {
-				// console.log('checking character object for specific collisions')
 				if (object.name.toLowerCase() === 'death') return object
 				if (direction === 'RIGHT') {
 					const differenceInYLevel = maxY_1 - minY_2
@@ -159,7 +157,6 @@ function objectCollided(direction: 'UP' | 'DOWN' | 'LEFT' | 'RIGHT', isCheckingC
 			} else if (direction === 'UP' && object.name.toLowerCase() === 'character') {
 				// Platform should push character up if possible
 				const characterCollisionUp = objectCollided('UP', true)
-				// console.log(characterCollisionUp)
 				if (characterCollisionUp === false) {
 					// Area above character is clear, still need to check if the platform is going to be clear
 					const objectHasCollisionsAbove = objectCollided('UP', false, true)
@@ -178,10 +175,6 @@ function objectCollided(direction: 'UP' | 'DOWN' | 'LEFT' | 'RIGHT', isCheckingC
 		}
 	}
 	return false
-	// =============================================================================================================================================
-	// AS OF 1:37AM I AM FAIRLY CONFIDENT THAT THIS COLLISION DETECTION ALGORITHM IS WORKING AS INTENDED WITHOUT UNACCOUNTED FOR EDGE CASES, BUT ITS ALSO 1:37AM
-	// UPDATE: I WAS WRONG I ONLY PUT HALF THE COLLISION CONDITIONS IN, SHOULD NOW FUNCTION MORE CONSISTENTLY
-	// =============================================================================================================================================
 }
 
 const keyDownEventHandler = (e: KeyboardEvent) => {
@@ -314,7 +307,6 @@ function advanceCharacter() {
 	if (characterCollidingDown === true) {
 		// objectCollided returns true if we hit the edge of the screen
 	}
-	// console.log(characterCollidingRight, characterCollidingDown)
 }
 
 function start() {
@@ -326,7 +318,6 @@ function start() {
 	// Start game loop
 	setInterval(draw, 100)
 	setTimeout(() => setInterval(advanceCharacter, 100), 1500)
-	// console.log(characterObject)
 }
 
 window.onload = () => document.querySelector<HTMLButtonElement>('button.button').onclick = () => start()
