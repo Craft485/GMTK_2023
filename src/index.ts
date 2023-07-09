@@ -22,8 +22,9 @@ interface parsedSceneDataObject {
 
 import * as level_01 from './levels/level_01.json'
 import * as level_02 from './levels/level_02.json'
+import * as level_03 from './levels/level_03.json'
 
-const levels = [ level_01, level_02 ]
+const levels = [ level_01, level_02, level_03 ]
 let levelIndex = 0
 
 const canvas = document.querySelector<HTMLCanvasElement>('#canvas')
@@ -48,7 +49,7 @@ function parseObjectDataExpression(expression: string): number {
 }
 
 let characterObject: parsedSceneDataObject | null = null
-let levelData = { scene_data: loadLevelData(levels[0])}
+let levelData = { scene_data: loadLevelData(levels[levelIndex])}
 console.log(levelData)
 
 function loadLevelData(data: { scene_data: Array<unparsedSceneDataObject> }): Array<parsedSceneDataObject> {
@@ -80,13 +81,11 @@ function loadLevelData(data: { scene_data: Array<unparsedSceneDataObject> }): Ar
 function draw() {
 	ctx.clearRect(0, 0, canvas.width, canvas.height)
 	for (const object of Object.values(levelData.scene_data)) {
-		// console.log(object)
 		ctx.fillStyle = object.fillColor
 		ctx.strokeStyle = object.strokeColor
 		ctx.fillRect(object.pos.x, object.pos.y, object.width, object.height)
 		if (object.strokeColor) ctx.strokeRect(object.pos.x, object.pos.y, object.width, object.height)
 	}
-	// debugger
 }
 
 const MOVEMENT_INCREMENT = 10
@@ -140,7 +139,6 @@ function objectCollided(direction: 'UP' | 'DOWN' | 'LEFT' | 'RIGHT', isCheckingC
 		(minY_2 >= minY_1 && minY_2 <= maxY_1) ||
 		(maxY_2 >= minY_1 && maxY_2 <= maxY_1)
 		)) {
-			// console.log(`${clonedObject.name} overlapping ${object.name}`)
 			if (isCheckingCharacter && !ignoreCharacterObject) {
 				// console.log('checking character object for specific collisions')
 				if (object.name.toLowerCase() === 'death') return object
@@ -176,11 +174,9 @@ function objectCollided(direction: 'UP' | 'DOWN' | 'LEFT' | 'RIGHT', isCheckingC
 			return object
 		} else if (minY_1 < 0 || maxY_1 > canvas.height || minX_1 < 0 || maxX_1 > canvas.width) {
 			// Edge of screen collision
-			// console.log('edge of screen')
 			return true
 		}
 	}
-	// console.log('no collide')
 	return false
 	// =============================================================================================================================================
 	// AS OF 1:37AM I AM FAIRLY CONFIDENT THAT THIS COLLISION DETECTION ALGORITHM IS WORKING AS INTENDED WITHOUT UNACCOUNTED FOR EDGE CASES, BUT ITS ALSO 1:37AM
@@ -226,6 +222,10 @@ const mouseDownEventHandler = (e: MouseEvent) => {
 		const hitReg = e.x >= minX && e.x <= maxX && e.y >= minY && e.y <= maxY
 		console.log(hitReg)
 		if (hitReg) {
+			if (selectedObject !== null) {
+				selectedObject.fillColor = oldFillColor || 'white'
+				selectedObject = null
+			}
 			selectedObject = object
 			console.log(object)
 			oldFillColor = object.fillColor
@@ -254,6 +254,7 @@ function advanceCharacter() {
 		overlay.id = 'overlay'
 		
 		const text = document.createElement('p')
+		text.id = 'overlay-text'
 		text.innerText = levels[levelIndex + 1] ? `Success!` : 'Game Won!'
 		
 		const nextLevelButton = document.createElement('button')
@@ -294,6 +295,7 @@ function advanceCharacter() {
 		overlay.id = 'overlay'
 		
 		const text = document.createElement('p')
+		text.id = 'overlay-text'
 		text.innerText = `Game Over!`
 
 		const btn = document.createElement('button')

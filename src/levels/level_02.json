@@ -61,7 +61,7 @@
             },
             "width": 25,
             "height": 100,
-            "strokeColor": "",
+            "strokeColor": "red",
             "fillColor": "red",
             "moveable": true
         }
