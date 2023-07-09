@@ -6,3 +6,28 @@ body {
     overflow: hidden;
     background-color: #395b59;
 }
+
+#overlay {
+    position: absolute;
+    display: flex;
+    z-index: 999;
+    height: 100vh;
+    width: 100vw;
+    background-color: rgba(100, 100, 100, 0.5);
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-evenly;
+}
+
+#overlay-text {
+    color: white;
+    text-align: center;
+}
+
+.button {
+    font-size: large;
+}
+
+.button-container {
+    margin: 10%;
+}

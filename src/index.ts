@@ -20,9 +20,11 @@ interface parsedSceneDataObject {
 	moveable: boolean
 }
 
-// import { Vector3 as Vec3, Vector2 as Vec2, Raycaster, Object3D } from 'three'
+import * as level_01 from './levels/level_01.json'
+// import * as level_02 from './levels/level_02.json'
 
-import * as initLevelData from './levels/level_01.json'
+const levels = [ level_01, /*level_02*/ ]
+let levelIndex = 0
 
 const canvas = document.querySelector<HTMLCanvasElement>('#canvas')
 
@@ -33,12 +35,12 @@ const ctx = canvas.getContext('2d')
 
 let GAME_OVER = false
 let selectedObject: parsedSceneDataObject | null = null
+let oldFillColor: string | null = null
 
 const expressionMap: Map<string, number> = new Map([
 	["WIN_HEIGHT", canvas.height],
 	["WIN_WIDTH", canvas.width]
 ])
-// console.log(expressionMap)
 
 function parseObjectDataExpression(expression: string): number {
 	for (const [key, value] of expressionMap) expression = expression.replaceAll(key, `${value}`)
@@ -46,7 +48,7 @@ function parseObjectDataExpression(expression: string): number {
 }
 
 let characterObject: parsedSceneDataObject | null = null
-let levelData = { scene_data: loadLevelData(initLevelData)}
+let levelData = { scene_data: loadLevelData(levels[0])}
 console.log(levelData)
 
 function loadLevelData(data: { scene_data: Array<unparsedSceneDataObject> }): Array<parsedSceneDataObject> {
@@ -90,14 +92,11 @@ function draw() {
 const MOVEMENT_INCREMENT = 10
 
 function objectCollided(direction: 'UP' | 'DOWN' | 'LEFT' | 'RIGHT', isCheckingCharacter = false, ignoreCharacterObject = false): boolean | parsedSceneDataObject {
-	// console.log('start collision detection')
-	// console.log(direction, isCheckingCharacter)
 	// Assume selectedObject is not null since that check should have already been done prior to this call
 	const clonedObject: parsedSceneDataObject = JSON.parse(JSON.stringify(isCheckingCharacter ? characterObject : selectedObject))
 	// console.log(clonedObject)
 	switch (direction) {
 		case 'UP':
-			console.log('movment: up')
 			clonedObject.pos.y -= MOVEMENT_INCREMENT
 			break;
 		case 'DOWN':
@@ -144,6 +143,7 @@ function objectCollided(direction: 'UP' | 'DOWN' | 'LEFT' | 'RIGHT', isCheckingC
 			// console.log(`${clonedObject.name} overlapping ${object.name}`)
 			if (isCheckingCharacter && !ignoreCharacterObject) {
 				// console.log('checking character object for specific collisions')
+				if (object.name.toLowerCase() === 'death') return object
 				if (direction === 'RIGHT') {
 					const differenceInYLevel = maxY_1 - minY_2
 					if (differenceInYLevel <= TOLERANCE_THRESHOLD) {
@@ -154,7 +154,6 @@ function objectCollided(direction: 'UP' | 'DOWN' | 'LEFT' | 'RIGHT', isCheckingC
 						return false
 					}
 				} else if (direction === 'DOWN') {
-					if (object.name.toLowerCase() === 'death') return object
 					// This little bit of extra math should help in the character not getting pushed off screen
 					const candidateYValue = minY_2 - characterObject.height - 1
 					if (candidateYValue > 0) characterObject.pos.y = candidateYValue
@@ -189,7 +188,7 @@ function objectCollided(direction: 'UP' | 'DOWN' | 'LEFT' | 'RIGHT', isCheckingC
 	// =============================================================================================================================================
 }
 
-window.addEventListener('keydown', e => {
+const keyDownEventHandler = (e: KeyboardEvent) => {
 	if (selectedObject === null || GAME_OVER) return
 	// Move the selected object accordingly
 	switch (e.code) {
@@ -212,9 +211,9 @@ window.addEventListener('keydown', e => {
 		default:
 			break;
 	}
-})
+}
 
-window.addEventListener('mousedown', e => {
+const mouseDownEventHandler = (e: MouseEvent) => {
 	if (GAME_OVER) return
 	// Determine if the mouse press is within the bounds of an object
 	for (const object of Object.values(levelData.scene_data)) {
@@ -229,15 +228,16 @@ window.addEventListener('mousedown', e => {
 		if (hitReg) {
 			selectedObject = object
 			console.log(object)
-			object.fillColor = "purple"
+			oldFillColor = object.fillColor
+			object.fillColor = 'purple'
 			return
 		}
 	}
 	if (selectedObject !== null) {
-		selectedObject.fillColor = "white"
+		selectedObject.fillColor = oldFillColor || 'white'
 		selectedObject = null
 	}
-})
+}
 
 function advanceCharacter() {
 	if (GAME_OVER) return
@@ -246,13 +246,68 @@ function advanceCharacter() {
 	if (characterCollidingRight === false  && characterCollidingDown !== false) characterObject.pos.x += MOVEMENT_INCREMENT
 	if (characterCollidingDown === false) characterObject.pos.y += MOVEMENT_INCREMENT
 	if (characterCollidingDown["name"]?.toLowerCase() === "end") {
-		// Game Win!
-		window.alert('Game win')
+		// Manage game state
 		GAME_OVER = true
-	} else if (characterCollidingDown["name"]?.toLowerCase() === 'death') {
-		// Game Over!
-		window.alert('Game over')
+		selectedObject = null
+		// Manage UI
+		const overlay = document.createElement('div')
+		overlay.id = 'overlay'
+		
+		const text = document.createElement('p')
+		text.innerText = levels[levelIndex + 1] ? `Success!` : 'Game Won!'
+		
+		const nextLevelButton = document.createElement('button')
+		nextLevelButton.innerText = 'Next Level'
+		nextLevelButton.onclick = () => { 
+			levelIndex++
+			if (levels[levelIndex]) {
+				levelData = { scene_data: loadLevelData(levels[levelIndex]) }
+				GAME_OVER = false
+				overlay.remove()
+			}
+		}
+		nextLevelButton.className = 'button'
+		
+		const playAgainButton = document.createElement('button')
+		playAgainButton.innerText = 'Play Again'
+		playAgainButton.onclick = () => {
+			levelData = { scene_data: loadLevelData(levels[levelIndex]) }
+			GAME_OVER = false
+			overlay.remove()
+		}
+		playAgainButton.className = 'button'
+		overlay.appendChild(text)
+		
+		const buttonContainer = document.createElement('div')
+		buttonContainer.className = 'button-container'
+		buttonContainer.appendChild(playAgainButton)
+		buttonContainer.appendChild(nextLevelButton)
+
+		overlay.appendChild(buttonContainer)
+		document.body.prepend(overlay)
+	} else if (characterCollidingDown["name"]?.toLowerCase() === 'death' || characterCollidingRight["name"]?.toLowerCase() === 'death') {
+		// Manage game state
 		GAME_OVER = true
+		selectedObject = null
+		// Manage UI
+		const overlay = document.createElement('div')
+		overlay.id = 'overlay'
+		
+		const text = document.createElement('p')
+		text.innerText = `Game Over!`
+
+		const btn = document.createElement('button')
+		btn.innerText = 'Restart'
+		btn.onclick = () => {
+			levelData = { scene_data: loadLevelData(levels[levelIndex]) }
+			GAME_OVER = false
+			overlay.remove()
+		}
+		btn.className = 'button'
+
+		overlay.appendChild(text)
+		overlay.appendChild(btn)
+		document.body.prepend(overlay)
 	}
 	if (characterCollidingDown === true) {
 		// objectCollided returns true if we hit the edge of the screen
@@ -260,8 +315,16 @@ function advanceCharacter() {
 	// console.log(characterCollidingRight, characterCollidingDown)
 }
 
-window.onload = () => { 
+function start() {
+	// Remove ui overlay
+	document.querySelector<HTMLElement>('#overlay').remove()
+	// Set event handlers
+	window.addEventListener('keydown', keyDownEventHandler)
+	window.addEventListener('mousedown', mouseDownEventHandler)
+	// Start game loop
 	setInterval(draw, 100)
 	setTimeout(() => setInterval(advanceCharacter, 100), 1500)
-	console.log(characterObject)
+	// console.log(characterObject)
 }
+
+window.onload = () => document.querySelector<HTMLButtonElement>('button.button').onclick = () => start()
