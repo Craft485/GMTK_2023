@@ -1,0 +1,69 @@
+{
+    "scene_data": [
+        {
+            "name": "character",
+            "id": 0,
+            "pos": {
+                "x": 0,
+                "y": "500 - 150"
+            },
+            "width": 25,
+            "height": 50,
+            "strokeColor": "black",
+            "fillColor": "yellow",
+            "moveable": false
+        },
+        {
+            "name": "start",
+            "id": 1,
+            "pos": {
+                "x": 0,
+                "y": 500
+            },
+            "width": 100,
+            "height": "WIN_HEIGHT",
+            "strokeColor": "black",
+            "fillColor": "green",
+            "moveable": false
+        },
+        {
+            "name": "end",
+            "id": 2,
+            "pos": {
+                "x": "WIN_WIDTH - 100",
+                "y": 500
+            },
+            "width": 100,
+            "height": "WIN_HEIGHT",
+            "strokeColor": "black",
+            "fillColor": "blue",
+            "moveable": false
+        },
+        {
+            "name": "platform",
+            "id": 3,
+            "pos": {
+                "x": 100,
+                "y": 500
+            },
+            "width": "WIN_WIDTH - 200",
+            "height": 50,
+            "strokeColor": "black",
+            "fillColor": "white",
+            "moveable": false
+        },
+        {
+            "name": "death",
+            "id": 4,
+            "pos": {
+                "x": "(WIN_WIDTH / 2) - (25 / 2)",
+                "y": 400
+            },
+            "width": 25,
+            "height": 100,
+            "strokeColor": "",
+            "fillColor": "red",
+            "moveable": true
+        }
+    ]
+}

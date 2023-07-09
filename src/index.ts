@@ -21,9 +21,9 @@ interface parsedSceneDataObject {
 }
 
 import * as level_01 from './levels/level_01.json'
-// import * as level_02 from './levels/level_02.json'
+import * as level_02 from './levels/level_02.json'
 
-const levels = [ level_01, /*level_02*/ ]
+const levels = [ level_01, level_02 ]
 let levelIndex = 0
 
 const canvas = document.querySelector<HTMLCanvasElement>('#canvas')
