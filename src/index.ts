@@ -177,30 +177,12 @@ function objectCollided(direction: 'UP' | 'DOWN' | 'LEFT' | 'RIGHT', isCheckingC
 	return false
 }
 
+const KEYS: { [key: string]: boolean } = {}
+
 const keyDownEventHandler = (e: KeyboardEvent) => {
 	if (e.code === 'KeyR' || e.code === 'Enter') return levelData = { scene_data: loadLevelData(levels[levelIndex]) }
 	if (selectedObject === null || GAME_OVER) return
-	// Move the selected object accordingly
-	switch (e.code) {
-		case 'KeyW':
-		case 'ArrowUp':
-			if (objectCollided('UP') === false) selectedObject.pos.y -= MOVEMENT_INCREMENT
-			break;
-		case 'KeyS':
-		case 'ArrowDown':
-			if (objectCollided('DOWN') === false) selectedObject.pos.y += MOVEMENT_INCREMENT
-			break;	
-		case 'KeyA':
-		case 'ArrowLeft':
-			if (objectCollided('LEFT') === false) selectedObject.pos.x -= MOVEMENT_INCREMENT
-			break;
-		case 'KeyD':
-		case 'ArrowRight':
-			if (objectCollided('RIGHT') === false) selectedObject.pos.x += MOVEMENT_INCREMENT
-			break;
-		default:
-			break;
-	}
+	return KEYS[e.code] = true
 }
 
 const mouseDownEventHandler = (e: MouseEvent) => {
@@ -235,6 +217,10 @@ const mouseDownEventHandler = (e: MouseEvent) => {
 
 function advanceCharacter() {
 	if (GAME_OVER) return
+	if ((KEYS['KeyW'] || KEYS['ArrowUp']) && objectCollided('UP') === false) selectedObject.pos.y -= MOVEMENT_INCREMENT
+	if ((KEYS['KeyS'] || KEYS['ArrowDown']) && objectCollided('DOWN') === false) selectedObject.pos.y += MOVEMENT_INCREMENT
+	if ((KEYS['KeyA'] || KEYS['ArrowLeft']) && objectCollided('LEFT') === false) selectedObject.pos.x -= MOVEMENT_INCREMENT
+	if ((KEYS['KeyD'] || KEYS['ArrowRight']) && objectCollided('RIGHT') === false) selectedObject.pos.x += MOVEMENT_INCREMENT
 	const characterCollidingRight = objectCollided('RIGHT', true)
 	const characterCollidingDown = objectCollided('DOWN', true)
 	if (characterCollidingRight === false  && characterCollidingDown !== false) characterObject.pos.x += MOVEMENT_INCREMENT
@@ -315,6 +301,7 @@ function start() {
 	document.querySelector<HTMLElement>('#overlay').remove()
 	// Set event handlers
 	window.addEventListener('keydown', keyDownEventHandler)
+	window.addEventListener('keyup', e => KEYS[e.code] = false )
 	window.addEventListener('mousedown', mouseDownEventHandler)
 	// Start game loop
 	setInterval(draw, 100)
