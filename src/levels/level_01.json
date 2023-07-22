@@ -5,7 +5,7 @@
             "id": 0,
             "pos": {
                 "x": 0,
-                "y": "500 - 150"
+                "y": "%H50% - 51"
             },
             "width": 25,
             "height": 50,
@@ -18,7 +18,7 @@
             "id": 1,
             "pos": {
                 "x": 0,
-                "y": 500
+                "y": "%H50%"
             },
             "width": 100,
             "height": "WIN_HEIGHT",
@@ -31,7 +31,7 @@
             "id": 2,
             "pos": {
                 "x": "WIN_WIDTH - 100",
-                "y": 500
+                "y": "%H50%"
             },
             "width": 100,
             "height": "WIN_HEIGHT",

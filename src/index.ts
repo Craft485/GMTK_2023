@@ -25,7 +25,7 @@ import * as level_02 from './levels/level_02.json'
 import * as level_03 from './levels/level_03.json'
 
 const levels = [ level_01, level_02, level_03 ]
-let levelIndex = 0
+let levelIndex = 2
 
 const canvas = document.querySelector<HTMLCanvasElement>('#canvas')
 
@@ -38,13 +38,20 @@ let GAME_OVER = false
 let selectedObject: parsedSceneDataObject | null = null
 let oldFillColor: string | null = null
 
-const expressionMap: Map<string, number> = new Map([
+// @ts-ignore no matching overloads on string and regex
+const expressionMap: Map<string| RegExp, number | (() => Number)> = new Map([
 	["WIN_HEIGHT", canvas.height],
-	["WIN_WIDTH", canvas.width]
+	["WIN_WIDTH", canvas.width],
+	[/%W(\d+)%/g, (str: string): number => { return /%W(\d+)%/g.test(str) ? (Number(/%W(\d+)%/.exec(str)[1]) / 100) * canvas.width || 0 : 0 }],
+	[/%H(\d+)%/g, (str: string): number => { return /%H(\d+)%/g.test(str) ? (Number(/%H(\d+)%/.exec(str)[1]) / 100) * canvas.height || 0 : 0 }]
 ])
 
 function parseObjectDataExpression(expression: string): number {
-	for (const [key, value] of expressionMap) expression = expression.replaceAll(key, `${value}`)
+	for (const [key, value] of expressionMap) {
+		console.log(key, value)
+		// @ts-ignore TS linter doesn't enjoy that the map can hold both static and dynamic values
+		expression = expression.replaceAll(key, `${Number(value) ? value : value(expression)}`)
+	}
 	return eval(expression)
 }
 

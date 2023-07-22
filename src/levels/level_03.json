@@ -5,7 +5,7 @@
             "id": 0,
             "pos": {
                 "x": 0,
-                "y": "500 - 150"
+                "y": "%H50% - 51"
             },
             "width": 25,
             "height": 50,
@@ -18,7 +18,7 @@
             "id": 1,
             "pos": {
                 "x": 0,
-                "y": 500
+                "y": "%H50%"
             },
             "width": 100,
             "height": "WIN_HEIGHT",
@@ -31,7 +31,7 @@
             "id": 2,
             "pos": {
                 "x": "WIN_WIDTH - 100",
-                "y": 500
+                "y": "%H50%"
             },
             "width": 100,
             "height": "WIN_HEIGHT",
@@ -57,7 +57,7 @@
             "id": 4,
             "pos": {
                 "x": "WIN_WIDTH - 201",
-                "y": 500
+                "y": "%H50%"
             },
             "width": 100,
             "height": 50,
@@ -86,7 +86,7 @@
                 "y": 0
             },
             "width": 99,
-            "height": 500,
+            "height": "%H50% + 25",
             "strokeColor": "black",
             "fillColor": "white",
             "moveable": false
@@ -96,7 +96,7 @@
             "id": 7,
             "pos": {
                 "x": 101,
-                "y": 500
+                "y": "%H50%"
             },
             "width": 50,
             "height": 25,
@@ -112,7 +112,7 @@
                 "y": 0
             },
             "width": 75,
-            "height": 550,
+            "height": "%H50% + 25",
             "strokeColor": "black",
             "fillColor": "white",
             "moveable": false
