@@ -25,7 +25,7 @@ import * as level_02 from './levels/level_02.json'
 import * as level_03 from './levels/level_03.json'
 
 const levels = [ level_01, level_02, level_03 ]
-let levelIndex = 2
+let levelIndex = 0
 
 const canvas = document.querySelector<HTMLCanvasElement>('#canvas')
 
@@ -94,7 +94,7 @@ function draw() {
 	}
 }
 
-const MOVEMENT_INCREMENT = 10
+const MOVEMENT_INCREMENT = Math.ceil(0.01 * canvas.width)
 
 function objectCollided(direction: 'UP' | 'DOWN' | 'LEFT' | 'RIGHT', isCheckingCharacter = false, ignoreCharacterObject = false): boolean | parsedSceneDataObject {
 	// Assume selectedObject is not null since that check should have already been done prior to this call
@@ -132,7 +132,6 @@ function objectCollided(direction: 'UP' | 'DOWN' | 'LEFT' | 'RIGHT', isCheckingC
 		const minY_2 = object.pos.y
 		const maxY_2 = minY_2 + object.height
 
-		// TODO: make this explanation make more sense
 		// If one of the extreme x values of the first rectangle (max or min) are contained within an interval defined by the extremes of the x values of the second rectangle, or vice verse, and one or more of one of the rectangles extreme y values are contained within an interval defined by the others extreme y values, or vice verse once more, then the two rectangles are overlapping.
 		if ((
 		(minX_1 >= minX_2 && minX_1 <= maxX_2) ||
@@ -203,14 +202,14 @@ const mouseDownEventHandler = (e: MouseEvent) => {
 		const maxY = minY + object.height
 
 		const hitReg = e.x >= minX && e.x <= maxX && e.y >= minY && e.y <= maxY
-		console.log(hitReg)
+		// console.log(hitReg)
 		if (hitReg) {
 			if (selectedObject !== null) {
 				selectedObject.fillColor = oldFillColor || 'white'
 				selectedObject = null
 			}
 			selectedObject = object
-			console.log(object)
+			// console.log(object)
 			oldFillColor = object.fillColor
 			object.fillColor = 'purple'
 			return
@@ -224,10 +223,6 @@ const mouseDownEventHandler = (e: MouseEvent) => {
 
 function advanceCharacter() {
 	if (GAME_OVER) return
-	if ((KEYS['KeyW'] || KEYS['ArrowUp']) && objectCollided('UP') === false) selectedObject.pos.y -= MOVEMENT_INCREMENT
-	if ((KEYS['KeyS'] || KEYS['ArrowDown']) && objectCollided('DOWN') === false) selectedObject.pos.y += MOVEMENT_INCREMENT
-	if ((KEYS['KeyA'] || KEYS['ArrowLeft']) && objectCollided('LEFT') === false) selectedObject.pos.x -= MOVEMENT_INCREMENT
-	if ((KEYS['KeyD'] || KEYS['ArrowRight']) && objectCollided('RIGHT') === false) selectedObject.pos.x += MOVEMENT_INCREMENT
 	const characterCollidingRight = objectCollided('RIGHT', true)
 	const characterCollidingDown = objectCollided('DOWN', true)
 	if (characterCollidingRight === false  && characterCollidingDown !== false) characterObject.pos.x += MOVEMENT_INCREMENT
@@ -303,16 +298,24 @@ function advanceCharacter() {
 	}
 }
 
+function updateEnviornment() {
+	if ((KEYS['KeyW'] || KEYS['ArrowUp']) && objectCollided('UP') === false) selectedObject.pos.y -= MOVEMENT_INCREMENT
+	if ((KEYS['KeyS'] || KEYS['ArrowDown']) && objectCollided('DOWN') === false) selectedObject.pos.y += MOVEMENT_INCREMENT
+	if ((KEYS['KeyA'] || KEYS['ArrowLeft']) && objectCollided('LEFT') === false) selectedObject.pos.x -= MOVEMENT_INCREMENT
+	if ((KEYS['KeyD'] || KEYS['ArrowRight']) && objectCollided('RIGHT') === false) selectedObject.pos.x += MOVEMENT_INCREMENT
+}
+
 function start() {
 	// Remove ui overlay
 	document.querySelector<HTMLElement>('#overlay').remove()
 	// Set event handlers
 	window.addEventListener('keydown', keyDownEventHandler)
-	window.addEventListener('keyup', e => KEYS[e.code] = false )
+	window.addEventListener('keyup', e => KEYS[e.code] = false)
 	window.addEventListener('mousedown', mouseDownEventHandler)
 	// Start game loop
 	setInterval(draw, 100)
-	setTimeout(() => setInterval(advanceCharacter, 100), 1500)
+	setInterval(updateEnviornment, 100)
+	setTimeout(() => setInterval(advanceCharacter, 100), 2500)
 }
 
 window.onload = () => document.querySelector<HTMLButtonElement>('button.button').onclick = () => start()
