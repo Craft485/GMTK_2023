@@ -37,6 +37,8 @@ const ctx = canvas.getContext('2d')
 let GAME_OVER = false
 let selectedObject: parsedSceneDataObject | null = null
 let oldFillColor: string | null = null
+let updateEnviornmentInterval: NodeJS.Timer | null = null
+let updateCharacterInterval: NodeJS.Timer | null = null
 
 // @ts-ignore no matching overloads on string and regex
 const expressionMap: Map<string| RegExp, number | (() => Number)> = new Map([
@@ -47,11 +49,8 @@ const expressionMap: Map<string| RegExp, number | (() => Number)> = new Map([
 ])
 
 function parseObjectDataExpression(expression: string): number {
-	for (const [key, value] of expressionMap) {
-		console.log(key, value)
-		// @ts-ignore TS linter doesn't enjoy that the map can hold both static and dynamic values
-		expression = expression.replaceAll(key, `${Number(value) ? value : value(expression)}`)
-	}
+	// @ts-ignore TS linter doesn't enjoy that the map can hold both static and dynamic values
+	for (const [key, value] of expressionMap) expression = expression.replaceAll(key, `${Number(value) ? value : value(expression)}`)
 	return eval(expression)
 }
 
@@ -186,7 +185,14 @@ function objectCollided(direction: 'UP' | 'DOWN' | 'LEFT' | 'RIGHT', isCheckingC
 const KEYS: { [key: string]: boolean } = {}
 
 const keyDownEventHandler = (e: KeyboardEvent) => {
-	if (e.code === 'KeyR' || e.code === 'Enter') return levelData = { scene_data: loadLevelData(levels[levelIndex]) }
+	if (e.code === 'KeyR' || e.code === 'Enter') {
+		levelData = { scene_data: loadLevelData(levels[levelIndex]) }
+		clearInterval(updateEnviornmentInterval)
+		clearInterval(updateCharacterInterval)
+		updateEnviornmentInterval = setInterval(updateEnviornment, 100)
+		setTimeout(() => updateCharacterInterval = setInterval(advanceCharacter, 100), 2500)
+		return
+	}
 	if (selectedObject === null || GAME_OVER) return
 	return KEYS[e.code] = true
 }
@@ -242,11 +248,15 @@ function advanceCharacter() {
 		const nextLevelButton = document.createElement('button')
 		nextLevelButton.innerText = 'Next Level'
 		nextLevelButton.onclick = () => { 
-			levelIndex++
-			if (levels[levelIndex]) {
+			if (levels[levelIndex + 1]) {
+				levelIndex++
+				clearInterval(updateEnviornmentInterval)
+				clearInterval(updateCharacterInterval)
 				levelData = { scene_data: loadLevelData(levels[levelIndex]) }
 				GAME_OVER = false
 				overlay.remove()
+				updateEnviornmentInterval = setInterval(updateEnviornment, 100)
+				setTimeout(() => updateCharacterInterval = setInterval(advanceCharacter, 100), 2500)
 			}
 		}
 		nextLevelButton.className = 'button'
@@ -254,9 +264,13 @@ function advanceCharacter() {
 		const playAgainButton = document.createElement('button')
 		playAgainButton.innerText = 'Play Again'
 		playAgainButton.onclick = () => {
+			clearInterval(updateEnviornmentInterval)
+			clearInterval(updateCharacterInterval)
 			levelData = { scene_data: loadLevelData(levels[levelIndex]) }
 			GAME_OVER = false
 			overlay.remove()
+			updateEnviornmentInterval = setInterval(updateEnviornment, 100)
+			setTimeout(() => updateCharacterInterval = setInterval(advanceCharacter, 100), 2500)
 		}
 		playAgainButton.className = 'button'
 		overlay.appendChild(text)
@@ -264,7 +278,7 @@ function advanceCharacter() {
 		const buttonContainer = document.createElement('div')
 		buttonContainer.className = 'button-container'
 		buttonContainer.appendChild(playAgainButton)
-		buttonContainer.appendChild(nextLevelButton)
+		if (levels[levelIndex + 1]) buttonContainer.appendChild(nextLevelButton)
 
 		overlay.appendChild(buttonContainer)
 		document.body.prepend(overlay)
@@ -283,9 +297,13 @@ function advanceCharacter() {
 		const btn = document.createElement('button')
 		btn.innerText = 'Restart'
 		btn.onclick = () => {
+			clearInterval(updateEnviornmentInterval)
+			clearInterval(updateCharacterInterval)
 			levelData = { scene_data: loadLevelData(levels[levelIndex]) }
 			GAME_OVER = false
 			overlay.remove()
+			updateEnviornmentInterval = setInterval(updateEnviornment, 100)
+			setTimeout(() => updateCharacterInterval = setInterval(advanceCharacter, 100), 2500)
 		}
 		btn.className = 'button'
 
@@ -314,8 +332,8 @@ function start() {
 	window.addEventListener('mousedown', mouseDownEventHandler)
 	// Start game loop
 	setInterval(draw, 100)
-	setInterval(updateEnviornment, 100)
-	setTimeout(() => setInterval(advanceCharacter, 100), 2500)
+	updateEnviornmentInterval = setInterval(updateEnviornment, 100)
+	setTimeout(() => updateCharacterInterval = setInterval(advanceCharacter, 100), 2500)
 }
 
 window.onload = () => document.querySelector<HTMLButtonElement>('button.button').onclick = () => start()
